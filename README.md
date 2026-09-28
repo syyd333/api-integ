@@ -181,11 +181,5 @@ Slack), auto-capture of resolved incidents from the ticketing system, and a
 "stale memory" review queue that surfaces incidents nobody has confirmed
 recently.
 
-## Hackathon checklist
 
-- [ ] Profile Review Form completed by every team member
-- [x] Prototype built and demoed (this repo)
-- [ ] Content submitted: article + social post + video (see the separate
-      Content Guide — a LinkedIn *Article* and a LinkedIn *post* count as
-      two different deliverables)
 - [ ] One final submission per team, before **29 September**
