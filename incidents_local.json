@@ -1,0 +1,65 @@
+{
+  "incidents": [
+    {
+      "id": "inc-7955f2e2",
+      "api_name": "Razorpay",
+      "error_signature": "Webhook signature verification failed: invalid signature",
+      "text_id": "",
+      "root_cause": "A global JSON body-parser middleware re-serialized the request body before it reached the webhook handler, so the bytes we HMAC-ed were not the exact bytes Razorpay signed.",
+      "fix": "Verify `X-Razorpay-Signature` as HMAC-SHA256 of the raw, untouched request body using RAZORPAY_WEBHOOK_SECRET - read the body before any JSON parsing middleware runs (e.g. exclude the webhook route or capture request.body() first).",
+      "resolved_by": "priya",
+      "date": "2026-03-14"
+    },
+    {
+      "id": "inc-82e1b5ee",
+      "api_name": "Auth0",
+      "error_signature": "invalid_grant: Unknown or invalid refresh token",
+      "text_id": "",
+      "root_cause": "Refresh tokens were being rotated (rotation enabled in the Auth0 tenant settings), but the client was reusing the old refresh token from its cache instead of the new one returned on the previous refresh call.",
+      "fix": "Always persist and use the `refresh_token` field returned in the token-refresh response, even if you didn't request rotation - Auth0 silently rotates it once rotation is enabled tenant-wide.",
+      "resolved_by": "arjun",
+      "date": "2026-02-02"
+    },
+    {
+      "id": "inc-c87f7527",
+      "api_name": "Twilio",
+      "error_signature": "HTTP 429: Too Many Requests on outbound SMS, no Retry-After header",
+      "text_id": "",
+      "root_cause": "Twilio's per-number rate limit (1 msg/sec on trial/local numbers) isn't documented in the main API reference - it only appears in the messaging-limits guide - and Twilio does not return a `Retry-After` header, so naive backoff assumed no limit existed.",
+      "fix": "Implement a fixed queue that sends at most 1 message/sec per originating number, with exponential backoff on any 429 regardless of headers.",
+      "resolved_by": "priya",
+      "date": "2026-01-20"
+    },
+    {
+      "id": "inc-926c8bb3",
+      "api_name": "AWS S3",
+      "error_signature": "SignatureDoesNotMatch when uploading via presigned URL from browser",
+      "text_id": "",
+      "root_cause": "The presigned URL was generated with a `Content-Type` condition, but the browser's fetch/XHR request sent a slightly different Content-Type (with charset appended) than the one used to sign the URL.",
+      "fix": "Either omit Content-Type from the signing conditions, or explicitly set the exact same Content-Type string (no charset) in both the signing call and the upload request headers.",
+      "resolved_by": "meera",
+      "date": "2026-04-08"
+    },
+    {
+      "id": "inc-df8317fd",
+      "api_name": "Slack API",
+      "error_signature": "invalid_auth on chat.postMessage despite a valid-looking bot token",
+      "text_id": "",
+      "root_cause": "The app was using a legacy `xoxp-` user token copied from an old integration instead of the `xoxb-` bot token; Slack's error message doesn't distinguish between the two failure modes.",
+      "fix": "Regenerate and use the Bot User OAuth Token (`xoxb-...`) from the app's OAuth & Permissions page, and confirm the `chat:write` scope is granted.",
+      "resolved_by": "arjun",
+      "date": "2026-05-01"
+    },
+    {
+      "id": "inc-b39fadcc",
+      "api_name": "Stripe",
+      "error_signature": "No signatures found matching the expected signature for payload",
+      "text_id": "",
+      "root_cause": "A framework-level body-parsing middleware (e.g. a generic JSON body parser applied globally) was re-serializing the request body before it reached the webhook handler, changing whitespace/key order and breaking Stripe's raw-body HMAC check.",
+      "fix": "Exclude the Stripe webhook route from any global JSON body-parsing middleware and read the raw, untouched request body specifically for signature verification.",
+      "resolved_by": "meera",
+      "date": "2026-03-29"
+    }
+  ],
+  "tombstones": []
+}

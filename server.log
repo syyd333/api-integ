@@ -1,0 +1,106 @@
+INFO:     Started server process [11584]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:64069 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64076 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64103 - "GET /?v=4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64103 - "GET /incidents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64103 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64103 - "GET /history?limit=30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64105 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64117 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64113 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57480 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57495 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57850 - "GET /?v=5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57850 - "GET /incidents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57855 - "GET /history?limit=30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57855 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57850 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57857 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57858 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61290 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61321 - "POST /debug HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61324 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61321 - "GET /history?limit=30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59134 - "POST /debug HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59134 - "GET /history?limit=30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59134 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59136 - "GET /history?limit=200 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59137 - "GET /history?limit=500 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58250 - "POST /debug HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58250 - "GET /history?limit=30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58250 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58250 - "POST /debug HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58252 - "POST /debug HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58250 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58252 - "GET /history?limit=30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55533 - "GET /?v=5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55533 - "GET /incidents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53363 - "GET /history?limit=30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53363 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55533 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65260 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60230 - "GET /history?limit=200 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60230 - "GET /history?limit=500 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64307 - "POST /debug HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64307 - "GET /history?limit=30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64307 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57111 - "POST /debug HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57111 - "GET /history?limit=30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57111 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64908 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51680 - "GET /history?limit=200 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51680 - "GET /history?limit=500 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51680 - "GET /history?limit=10000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58174 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58188 - "GET /?v=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58199 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56330 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56329 - "GET /?v=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56329 - "GET /incidents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56338 - "GET /history?limit=30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56338 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56329 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56568 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56606 - "GET /?v=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56607 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56606 - "GET /incidents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56619 - "GET /history?limit=5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56619 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56606 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50539 - "GET /history?limit=200 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50540 - "GET /history?limit=500 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50540 - "GET /history?limit=200 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50541 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59600 - "GET /?v=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59601 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59600 - "GET /incidents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59609 - "GET /history?limit=5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59609 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59600 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63794 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64562 - "GET /?v=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64563 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64562 - "GET /incidents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64562 - "GET /history?limit=5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64562 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64564 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62320 - "GET /history?limit=200 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62321 - "GET /history?limit=500 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62353 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52688 - "POST /debug HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52690 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52688 - "GET /history?limit=5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51569 - "GET /?v=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51569 - "GET /incidents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62424 - "GET /history?limit=5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53416 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51569 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55970 - "POST /debug HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55970 - "GET /history?limit=5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55970 - "GET /stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55970 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55970 - "GET /history?limit=200 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55970 - "GET /history?limit=500 HTTP/1.1" 200 OK

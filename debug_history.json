@@ -1,0 +1,124 @@
+{
+  "history": [
+    {
+      "ts": "2026-09-28T15:23:28+00:00",
+      "error": "Webhook signature verification failed: invalid signature",
+      "use_memory": true,
+      "memory_tier": "strict",
+      "matched_api": "Razorpay",
+      "matched_incident_id": "inc-7955f2e2",
+      "confidence": 0.8,
+      "reply": "[offline mode: TypeError - set ANTHROPIC_API_KEY for full reasoning.]\nTeam memory says:\nPast incident (verified match):\nAPI: Razorpay\nError: Webhook signature verification failed: invalid signature\nRoot cause: A global JSON body-parser middleware re-serialized the request body before it reached the webhook handler, so the bytes we HMAC-ed were not the exact bytes Razorpay signed.\nFix: Verify `X-Razorpay-Signature` as HMAC-SHA256 of the raw, untouched request body using RAZORPAY_WEBHOOK_SECRET - read the body before any JSON parsing middleware runs (e.g. exclude the webhook route or capture request.body() first).\nResolved by: priya on 2026-03-14"
+    },
+    {
+      "ts": "2026-09-28T15:36:05+00:00",
+      "error": "Webhook signature verification failed: invalid signature",
+      "use_memory": true,
+      "memory_tier": "strict",
+      "matched_api": "Razorpay",
+      "matched_incident_id": "inc-7955f2e2",
+      "confidence": 0.8,
+      "reply": "[offline mode: TypeError - set ANTHROPIC_API_KEY for full reasoning.]\nTeam memory says:\nPast incident (verified match):\nAPI: Razorpay\nError: Webhook signature verification failed: invalid signature\nRoot cause: A global JSON body-parser middleware re-serialized the request body before it reached the webhook handler, so the bytes we HMAC-ed were not the exact bytes Razorpay signed.\nFix: Verify `X-Razorpay-Signature` as HMAC-SHA256 of the raw, untouched request body using RAZORPAY_WEBHOOK_SECRET - read the body before any JSON parsing middleware runs (e.g. exclude the webhook route or capture request.body() first).\nResolved by: priya on 2026-03-14"
+    },
+    {
+      "ts": "2026-09-28T16:09:41+00:00",
+      "error": "Webhook signature verification failed: invalid signature",
+      "use_memory": true,
+      "memory_tier": "strict",
+      "matched_api": "Razorpay",
+      "matched_incident_id": "inc-7955f2e2",
+      "confidence": 0.8,
+      "reply": "[offline mode: TypeError - set ANTHROPIC_API_KEY for full reasoning.]\nTeam memory says:\nPast incident (verified match):\nAPI: Razorpay\nError: Webhook signature verification failed: invalid signature\nRoot cause: A global JSON body-parser middleware re-serialized the request body before it reached the webhook handler, so the bytes we HMAC-ed were not the exact bytes Razorpay signed.\nFix: Verify `X-Razorpay-Signature` as HMAC-SHA256 of the raw, untouched request body using RAZORPAY_WEBHOOK_SECRET - read the body before any JSON parsing middleware runs (e.g. exclude the webhook route or capture request.body() first).\nResolved by: priya on 2026-03-14"
+    },
+    {
+      "ts": "2026-09-28T16:36:16+00:00",
+      "error": "Webhook signature verification failed: invalid signature",
+      "use_memory": true,
+      "memory_tier": "strict",
+      "matched_api": "Razorpay",
+      "matched_incident_id": "inc-7955f2e2",
+      "confidence": 0.8,
+      "reply": "[offline mode: TypeError - set ANTHROPIC_API_KEY for full reasoning.]\nTeam memory says:\nPast incident (verified match):\nAPI: Razorpay\nError: Webhook signature verification failed: invalid signature\nRoot cause: A global JSON body-parser middleware re-serialized the request body before it reached the webhook handler, so the bytes we HMAC-ed were not the exact bytes Razorpay signed.\nFix: Verify `X-Razorpay-Signature` as HMAC-SHA256 of the raw, untouched request body using RAZORPAY_WEBHOOK_SECRET - read the body before any JSON parsing middleware runs (e.g. exclude the webhook route or capture request.body() first).\nResolved by: priya on 2026-03-14"
+    },
+    {
+      "ts": "2026-09-28T16:36:43+00:00",
+      "error": "Webhook signature verification failed: invalid signature",
+      "use_memory": false,
+      "memory_tier": "none",
+      "matched_api": null,
+      "matched_incident_id": null,
+      "confidence": null,
+      "reply": "[offline mode: TypeError - set ANTHROPIC_API_KEY for full reasoning.]\nTeam memory says:\nYou help engineers debug third-party API/integration errors. You have no memory of past incidents - give your best general debugging advice from first principles."
+    },
+    {
+      "ts": "2026-09-28T16:37:53+00:00",
+      "error": "Webhook signature verification failed: invalid signature",
+      "use_memory": false,
+      "memory_tier": "none",
+      "matched_api": null,
+      "matched_incident_id": null,
+      "confidence": null,
+      "reply": "[offline mode: TypeError - set ANTHROPIC_API_KEY for full reasoning.]\nTeam memory says:\nYou help engineers debug third-party API/integration errors. You have no memory of past incidents - give your best general debugging advice from first principles."
+    },
+    {
+      "ts": "2026-09-28T16:37:55+00:00",
+      "error": "Webhook signature verification failed: invalid signature",
+      "use_memory": false,
+      "memory_tier": "none",
+      "matched_api": null,
+      "matched_incident_id": null,
+      "confidence": null,
+      "reply": "[offline mode: TypeError - set ANTHROPIC_API_KEY for full reasoning.]\nTeam memory says:\nYou help engineers debug third-party API/integration errors. You have no memory of past incidents - give your best general debugging advice from first principles."
+    },
+    {
+      "ts": "2026-09-28T16:37:56+00:00",
+      "error": "Webhook signature verification failed: invalid signature",
+      "use_memory": true,
+      "memory_tier": "strict",
+      "matched_api": "Razorpay",
+      "matched_incident_id": "inc-7955f2e2",
+      "confidence": 0.8,
+      "reply": "[offline mode: TypeError - set ANTHROPIC_API_KEY for full reasoning.]\nTeam memory says:\nPast incident (verified match):\nAPI: Razorpay\nError: Webhook signature verification failed: invalid signature\nRoot cause: A global JSON body-parser middleware re-serialized the request body before it reached the webhook handler, so the bytes we HMAC-ed were not the exact bytes Razorpay signed.\nFix: Verify `X-Razorpay-Signature` as HMAC-SHA256 of the raw, untouched request body using RAZORPAY_WEBHOOK_SECRET - read the body before any JSON parsing middleware runs (e.g. exclude the webhook route or capture request.body() first).\nResolved by: priya on 2026-03-14"
+    },
+    {
+      "ts": "2026-09-28T17:01:20+00:00",
+      "error": "HTTP 429: Too Many Requests, no Retry-After header",
+      "use_memory": false,
+      "memory_tier": "none",
+      "matched_api": null,
+      "matched_incident_id": null,
+      "confidence": null,
+      "reply": "[offline mode: TypeError - set ANTHROPIC_API_KEY for full reasoning.]\nTeam memory says:\nYou help engineers debug third-party API/integration errors. You have no memory of past incidents - give your best general debugging advice from first principles."
+    },
+    {
+      "ts": "2026-09-28T17:01:41+00:00",
+      "error": "HTTP 429: Too Many Requests, no Retry-After header",
+      "use_memory": true,
+      "memory_tier": "strict",
+      "matched_api": "Twilio",
+      "matched_incident_id": "inc-c87f7527",
+      "confidence": 1.0,
+      "reply": "[offline mode: TypeError - set ANTHROPIC_API_KEY for full reasoning.]\nTeam memory says:\nPast incident (verified match):\nAPI: Twilio\nError: HTTP 429: Too Many Requests on outbound SMS, no Retry-After header\nRoot cause: Twilio's per-number rate limit (1 msg/sec on trial/local numbers) isn't documented in the main API reference - it only appears in the messaging-limits guide - and Twilio does not return a `Retry-After` header, so naive backoff assumed no limit existed.\nFix: Implement a fixed queue that sends at most 1 message/sec per originating number, with exponential backoff on any 429 regardless of headers.\nResolved by: priya on 2026-01-20"
+    },
+    {
+      "ts": "2026-09-28T17:40:20+00:00",
+      "error": "Webhook signature verification failed: invalid signature",
+      "use_memory": true,
+      "memory_tier": "strict",
+      "matched_api": "Razorpay",
+      "matched_incident_id": "inc-7955f2e2",
+      "confidence": 0.8,
+      "reply": "[offline mode: TypeError - set ANTHROPIC_API_KEY for full reasoning.]\nTeam memory says:\nPast incident (verified match):\nAPI: Razorpay\nError: Webhook signature verification failed: invalid signature\nRoot cause: A global JSON body-parser middleware re-serialized the request body before it reached the webhook handler, so the bytes we HMAC-ed were not the exact bytes Razorpay signed.\nFix: Verify `X-Razorpay-Signature` as HMAC-SHA256 of the raw, untouched request body using RAZORPAY_WEBHOOK_SECRET - read the body before any JSON parsing middleware runs (e.g. exclude the webhook route or capture request.body() first).\nResolved by: priya on 2026-03-14"
+    },
+    {
+      "ts": "2026-09-28T17:53:28+00:00",
+      "error": "HTTP 429: Too Many Requests, no Retry-After header",
+      "use_memory": true,
+      "memory_tier": "strict",
+      "matched_api": "Twilio",
+      "matched_incident_id": "inc-c87f7527",
+      "confidence": 1.0,
+      "reply": "[offline mode: TypeError - set ANTHROPIC_API_KEY for full reasoning.]\nTeam memory says:\nPast incident (verified match):\nAPI: Twilio\nError: HTTP 429: Too Many Requests on outbound SMS, no Retry-After header\nRoot cause: Twilio's per-number rate limit (1 msg/sec on trial/local numbers) isn't documented in the main API reference - it only appears in the messaging-limits guide - and Twilio does not return a `Retry-After` header, so naive backoff assumed no limit existed.\nFix: Implement a fixed queue that sends at most 1 message/sec per originating number, with exponential backoff on any 429 regardless of headers.\nResolved by: priya on 2026-01-20"
+    }
+  ]
+}
