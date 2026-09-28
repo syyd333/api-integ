@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Integration Debugging Memory Agent</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"
+        integrity="sha512-vc58qvvBdrDR4etbxMdlTt4GBQk1qjvyORR2nrsPsFPyrs+/u5c3+1Ct6upOgdZoIl7eq6k3a1UPDSNAQi/32A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style>
+  :root {
+    --bg: #f7f3ec;          /* warm beige */
+    --panel: #ffffff;
+    --inset: #faf7f1;
+    --line: #e6dfd1;        /* soft warm border */
+    --line-strong: #d8cfbc;
+    --text: #2b2721;
+    --muted: #978d7c;
+    --ink: #2b2721;         /* primary button */
+    --good: #43795f; --good-bg: #eef4ee;
+    --warn: #96712f; --warn-bg: #f7f1e2;
+    --bad: #a95049;  --bad-bg: #f8ece9;
+    --gray-bg: #f1ede4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.6 ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 22px 20px 40px; }
+  header { margin-bottom: 28px; }
+  h1 { font-size: 19px; margin: 0 0 2px; font-weight: 600; letter-spacing: .1px; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 16px; align-items: start; }
+  @media (max-width: 1099px) { .grid { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 20px;
+  }
+  .panel h2 {
+    margin: 0 0 12px; font-size: 11.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .14em; color: var(--muted);
+  }
+  textarea {
+    width: 100%; min-height: 78px; resize: vertical; background: var(--inset); color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+    font: 13px/1.55 ui-monospace, "Cascadia Code", Consolas, monospace;
+  }
+  textarea:focus, input:focus { outline: none; border-color: var(--line-strong); box-shadow: 0 0 0 3px rgba(43,39,33,.05); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  button {
+    background: var(--ink); color: #fff; border: 0;
+    padding: 9px 18px; border-radius: 8px; font-weight: 500; cursor: pointer; font-size: 13.5px;
+    transition: opacity .12s;
+  }
+  button:hover { opacity: .85; }
+  button.ghost {
+    background: transparent; border: 1px solid var(--line-strong); color: var(--text); font-weight: 500;
+  }
+  button.ghost:hover { background: var(--gray-bg); opacity: 1; }
+  button:disabled { opacity: .45; cursor: wait; }
+  input[type="text"] {
+    background: var(--inset); color: var(--text); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 10px; font-size: 13px; min-width: 210px;
+  }
+  .toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+  .toggle input { display: none; }
+  .slider { width: 38px; height: 22px; background: var(--line-strong); border-radius: 999px; position: relative; transition: background .15s; }
+  .slider::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+    background: #fff; border-radius: 50%; transition: left .15s;
+  }
+  .toggle input:checked + .slider { background: var(--good); }
+  .toggle input:checked + .slider::after { left: 19px; }
+  .toggle-label { font-size: 13px; color: var(--muted); }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 600; letter-spacing: .05em;
+  }
+  .badge.strict { background: var(--good-bg); color: var(--good); }
+  .badge.recall { background: var(--warn-bg); color: var(--warn); }
+  .badge.none { background: var(--gray-bg); color: var(--muted); }
+  .badge.off { background: var(--bad-bg); color: var(--bad); }
+  .reply {
+    background: var(--inset); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px; white-space: pre-wrap; font: 12.5px/1.6 ui-monospace, Consolas, monospace;
+    min-height: 52px; max-height: 300px; overflow-y: auto;
+  }
+  .match-card { background: var(--inset); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-top: 10px; }
+  .match-card .meta { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  .match-card.conflict { background: var(--warn-bg); border-color: transparent; }
+  .inc-item { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-top: 8px; font-size: 13px; }
+  .inc-item .title { font-weight: 600; }
+  .inc-item .muted { color: var(--muted); font-size: 12px; }
+  /* compact one-line incident rows (click to expand) */
+  .inc-row { border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; margin-top: 6px; font-size: 12.5px; cursor: pointer; }
+  .inc-row.open { border-color: var(--line-strong); background: var(--inset); }
+  .inc-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .inc-line b { flex-shrink: 0; }
+  .inc-err { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip { flex-shrink: 0; font-size: 10px; padding: 1px 7px; border-radius: 999px; background: var(--gray-bg); color: var(--muted); }
+  .inc-body { margin-top: 8px; border-top: 1px dashed var(--line); padding-top: 8px; cursor: default; }
+  .inc-body .actions { margin-top: 8px; display: flex; gap: 6px; }
+  .inc-body button { padding: 4px 12px; font-size: 12px; border-radius: 6px; }
+  .inc-body button[data-act="del"] { background: transparent; border: 1px solid var(--line-strong); color: var(--bad); }
+  /* scrollable lists with a thin scrollbar */
+  .scroll-y { max-height: 420px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; padding-right: 2px; }
+  .scroll-y::-webkit-scrollbar { width: 6px; }
+  .scroll-y::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 3px; }
+  .scroll-y::-webkit-scrollbar-track { background: transparent; }
+  .muted { color: var(--muted); }
+  .small { font-size: 12.5px; }
+  .example {
+    font-size: 12.5px; color: var(--muted); background: none;
+    border: 1px solid var(--line); padding: 6px 12px; border-radius: 999px;
+  }
+  .example:hover { color: var(--text); border-color: var(--line-strong); background: var(--gray-bg); opacity: 1; }
+  .section-title { display: flex; justify-content: space-between; align-items: center; }
+  dialog {
+    background: var(--panel); color: var(--text); border: 1px solid var(--line);
+    border-radius: 12px; padding: 22px; width: min(540px, 92vw);
+  }
+  dialog::backdrop { background: rgba(43, 39, 33, .3); }
+  dialog label { display: block; font-size: 11.5px; color: var(--muted); margin: 12px 0 4px; text-transform: uppercase; letter-spacing: .1em; }
+  dialog input, dialog textarea {
+    width: 100%; background: var(--inset); color: var(--text); border: 1px solid var(--line);
+    border-radius: 8px; padding: 9px 11px; font-size: 13px; font-family: inherit;
+  }
+  dialog textarea { min-height: 60px; resize: vertical; }
+  .count { font-size: 12px; color: var(--muted); }
+  .http-error { color: var(--bad); font-size: 13px; margin-top: 8px; white-space: pre-wrap; }
+  .hist-item { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-top: 8px; font-size: 12.5px; cursor: pointer; }
+  .hist-item:hover { border-color: var(--line-strong); background: var(--inset); }
+  .hist-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .hist-error { margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+  .badge.mini { font-size: 10px; padding: 2px 8px; }
+  .note { font-size: 11.5px; color: var(--muted); }
+  .stat-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px; }
+  @media (max-width: 1099px) { .stat-cards { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); } }
+  .stat-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+  .stat-card .num { font-size: 16px; font-weight: 600; }
+  .stat-card .lbl { font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .09em; margin-top: 1px; }
+  .stat-card .sub { font-size: 9.5px; color: var(--muted); margin-top: 1px; }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 800px) { .compare-grid { grid-template-columns: 1fr; } }
+  .compare-col { background: var(--inset); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .compare-col h4 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+  .compare-col .body { white-space: pre-wrap; font: 12px/1.6 ui-monospace, Consolas, monospace; max-height: 320px; overflow-y: auto; }
+  .tabbar { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+  .tabbar button { background: none; border: 0; color: var(--muted); padding: 8px 14px; font-size: 13.5px; border-bottom: 2px solid transparent; border-radius: 0; }
+  .tabbar button.active { color: var(--text); border-bottom-color: var(--ink); font-weight: 600; }
+  .tabbar button:hover { color: var(--text); opacity: 1; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  #graph-svg { width: 100%; height: 360px; display: block; background: var(--inset); border: 1px solid var(--line); border-radius: 8px; touch-action: none; }
+  .graph-tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line-strong); border-radius: 8px; padding: 8px 10px; font-size: 12px; max-width: 280px; box-shadow: 0 4px 16px rgba(43,39,33,.12); z-index: 50; display: none; }
+  .graph-tip .tt-err { font-weight: 600; margin-bottom: 2px; }
+  .graph-tip .tt-fix { color: var(--muted); }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
+  .filters input, .filters select { background: var(--inset); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font-size: 12.5px; }
+  table.hist-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.hist-table th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  table.hist-table td { padding: 7px 8px; border-bottom: 1px solid var(--line); }
+  table.hist-table tbody tr { cursor: pointer; }
+  table.hist-table tbody tr:hover { background: var(--inset); }
+  /* right-column tab bar (in-memory active tab, no persistence) */
+  .rtabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+  .rtabs button { background: none; border: 0; color: var(--muted); padding: 6px 12px; font-size: 13px; border-bottom: 2px solid transparent; border-radius: 0; }
+  .rtabs button.active { color: var(--text); border-bottom-color: var(--ink); font-weight: 600; }
+  .rtabs button:hover { color: var(--text); opacity: 1; }
+  .rtab-panel { display: none; }
+  .rtab-panel.active { display: block; }
+  /* "⋯" dropdown for secondary actions (Export / Reset) */
+  details.menu { position: relative; display: inline-block; }
+  details.menu summary { list-style: none; cursor: pointer; background: transparent; border: 1px solid var(--line-strong);
+    color: var(--text); border-radius: 8px; padding: 4px 10px; font-size: 14px; line-height: 1.2; user-select: none; }
+  details.menu summary::-webkit-details-marker { display: none; }
+  details.menu[open] summary { background: var(--gray-bg); }
+  details.menu .menu-items { position: absolute; right: 0; top: calc(100% + 4px); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 20px rgba(43,39,33,.12); z-index: 60; min-width: 150px; padding: 4px; }
+  details.menu .menu-items button { display: block; width: 100%; text-align: left; background: none; border: 0;
+    color: var(--text); padding: 7px 10px; font-size: 13px; border-radius: 6px; }
+  details.menu .menu-items button:hover { background: var(--gray-bg); opacity: 1; }
+  .qpd-chart { margin-top: 14px; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; font-size: 11.5px; color: var(--muted); }
+  .legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; }
+  .node-g.hl circle { stroke: var(--ink); stroke-width: 2.5; animation: pulse 1.2s ease-out infinite; }
+  @keyframes pulse { 0% { stroke-opacity: 1; } 50% { stroke-opacity: .35; } 100% { stroke-opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Integration Debugging Memory Agent</h1>
+    <span class="sub">shared team memory for third-party API quirks · <span class="note">seed data is illustrative</span></span>
+  </header>
+
+  <div class="stat-cards" id="stat-cards"></div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="section-title">
+        <h2>Paste an error</h2>
+        <span class="count" id="health"></span>
+      </div>
+
+      <textarea id="error" placeholder="e.g. Webhook signature verification failed: invalid signature"></textarea>
+
+      <div class="row">
+        <button id="debug-btn">Debug</button>
+        <button class="ghost" id="compare-btn">Compare</button>
+        <button class="example" data-err="Webhook signature verification failed: invalid signature">Razorpay example</button>
+        <button class="example" data-err="stripe.error.SignatureVerificationError: No signatures found matching the expected signature for payload">Stripe near-miss</button>
+        <button class="example" data-err="HTTP 429: Too Many Requests, no Retry-After header">429 example</button>
+      </div>
+
+      <div class="row">
+        <label class="toggle" title="Toggle team memory">
+          <input type="checkbox" id="use-memory" checked />
+          <span class="slider"></span>
+          <span class="toggle-label">Memory <b id="mem-state">ON</b></span>
+        </label>
+        <button class="ghost" id="seed-btn">Seed demo data</button>
+        <span class="small muted" id="seed-result"></span>
+      </div>
+
+      <div class="http-error" id="error-box"></div>
+
+      <h2 style="margin-top:22px">Agent reply</h2>
+      <div class="reply" id="reply">Paste an error above and hit Debug.</div>
+
+      <div id="compare-area" style="display:none; margin-top:16px">
+        <h2>Compare mode</h2>
+        <div class="compare-grid">
+          <div class="compare-col">
+            <h4>Memory OFF <span class="badge none" style="margin-left:6px">before</span></h4>
+            <div class="body" id="cmp-off"></div>
+          </div>
+          <div class="compare-col">
+            <h4>Memory ON <span id="cmp-badge" class="badge strict" style="margin-left:6px"></span></h4>
+            <div class="body" id="cmp-on"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="section-title">
+          <h2>Recalled incident</h2>
+          <span id="tier-badge" class="badge none">memory off</span>
+        </div>
+        <div id="match-area" class="small muted">No match yet — debug an error to see what the team memory recalls.</div>
+      </div>
+
+      <div class="panel" style="margin-top:12px">
+        <div class="rtabs">
+          <button class="active" data-rtab="incidents">Incidents</button>
+          <button data-rtab="graph">Graph</button>
+          <button data-rtab="history">History</button>
+        </div>
+
+        <div class="rtab-panel active" id="rtab-incidents">
+          <div class="section-title" style="margin-bottom:8px">
+            <button class="ghost" id="new-btn">+ Log fix</button>
+            <details class="menu" id="actions-menu">
+              <summary aria-label="More actions">⋯</summary>
+              <div class="menu-items">
+                <button id="export-json-btn">Export JSON</button>
+                <button id="export-md-btn">Export MD</button>
+                <button id="reset-btn">Reset demo</button>
+              </div>
+            </details>
+          </div>
+          <div class="filters">
+            <input id="flt-search" placeholder="Search errors…" />
+            <select id="flt-api"><option value="">All APIs</option></select>
+            <select id="flt-resolver"><option value="">All resolvers</option></select>
+          </div>
+          <div id="incidents" class="small scroll-y"><span class="muted">Loading…</span></div>
+        </div>
+
+        <div class="rtab-panel" id="rtab-graph">
+          <div class="note" style="margin-bottom:6px">edges = shared API or shared root-cause category · drag · click</div>
+          <svg id="graph-svg"></svg>
+          <div class="legend" id="graph-legend"></div>
+          <div id="graph-detail" hidden style="margin-top:10px">
+            <div class="section-title">
+              <h2>Incident detail</h2>
+              <button class="ghost" id="graph-detail-close">Close</button>
+            </div>
+            <div id="graph-detail-body" class="small"></div>
+          </div>
+        </div>
+
+        <div class="rtab-panel" id="rtab-history">
+          <div class="section-title" style="margin-bottom:8px">
+            <button class="ghost" id="show-all-btn">Show all</button>
+            <button class="ghost" id="export-history-btn">Export CSV</button>
+            <button class="ghost" id="clear-history-btn">Clear</button>
+          </div>
+          <div id="history" class="scroll-y"><span class="muted">Loading…</span></div>
+          <div class="qpd-chart" id="qpd-chart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="graph-tip" id="graph-tip"></div>
+
+<dialog id="new-dialog">
+  <h3 id="dlg-title" style="margin:0 0 4px;font-size:15px">Log a resolved incident</h3>
+  <p class="small muted" id="dlg-sub" style="margin:4px 0 10px">Gets retained into the team's shared memory immediately.</p>
+  <label>API name</label><input id="f-api" placeholder="e.g. SendGrid" />
+  <label>Error signature</label><textarea id="f-error" placeholder="e.g. 550 5.7.1 Sender identity not verified"></textarea>
+  <label>Root cause</label><textarea id="f-cause"></textarea>
+  <label>Fix</label><textarea id="f-fix"></textarea>
+  <label>Resolved by</label><input id="f-by" placeholder="your name" />
+  <div class="row" style="justify-content:flex-end">
+    <button class="ghost" id="cancel-new">Cancel</button>
+    <button id="save-new">Retain</button>
+  </div>
+</dialog>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const API = "";
+
+async function api(method, path, body) {
+  const res = await fetch(API + path, {
+    method,
+    headers: body ? { "Content-Type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try { detail = (await res.json()).detail || detail; } catch {}
+    throw new Error(`${res.status}: ${detail}`);
+  }
+  return res.json();
+}
+
+function setBusy(b) {
+  $("debug-btn").disabled = b;
+  $("debug-btn").textContent = b ? "Thinking…" : "Debug";
+}
+
+$("mem-state").textContent = $("use-memory").checked ? "ON" : "OFF";
+$("use-memory").addEventListener("change", () => {
+  $("mem-state").textContent = $("use-memory").checked ? "ON" : "OFF";
+});
+
+document.querySelectorAll(".example").forEach((b) =>
+  b.addEventListener("click", () => { $("error").value = b.dataset.err; })
+);
+
+$("seed-btn").addEventListener("click", async () => {
+  $("seed-result").textContent = "Seeding…";
+  try {
+    const r = await api("POST", "/seed");
+    $("seed-result").textContent = `+${r.loaded} loaded, ${r.skipped} known${r.backfilled ? `, ${r.backfilled} backfilled to Hindsight` : ""}`;
+    await loadIncidents();
+    await loadHealth();
+    await loadStats();
+    if (activeRtab === "graph") drawGraph();
+  } catch (e) { $("seed-result").textContent = "Failed: " + e.message; }
+});
+
+$("reset-btn").addEventListener("click", async () => {
+  if (!confirm("Reset demo? This wipes all incidents and run history, then re-seeds the 6 demo incidents with fresh ids.")) return;
+  $("actions-menu").removeAttribute("open");
+  $("seed-result").textContent = "Resetting…";
+  try {
+    const r = await api("POST", "/reset-demo");
+    $("seed-result").textContent = `Reset ✓ ${r.loaded} incidents`;
+    await loadIncidents(); await loadHealth(); await loadHistory(); await loadStats();
+    if (activeRtab === "graph") drawGraph();
+  } catch (e) { $("seed-result").textContent = "Failed: " + e.message; }
+});
+
+$("debug-btn").addEventListener("click", async () => {
+  const error = $("error").value.trim();
+  if (!error) { $("error-box").textContent = "Paste an error first."; return; }
+  $("error-box").textContent = "";
+  setBusy(true);
+  $("reply").textContent = "";
+  highlightMatch(null); // clear the previous pulse on a new query
+  $("tier-badge").className = "badge none"; $("tier-badge").textContent = "thinking…";
+  try {
+    const r = await api("POST", "/debug", { error, use_memory: $("use-memory").checked });
+    $("reply").textContent = r.reply;
+    renderMatch(r);
+    highlightMatch(r);           // pulse the matched node in the graph
+    loadHistory();               // this run is now saved - refresh the panel
+    loadStats();
+  } catch (e) {
+    $("error-box").textContent = "Failed: " + e.message;
+  } finally { setBusy(false); }
+});
+
+// ---- Compare mode: run the same error both ways, side by side ----
+$("compare-btn").addEventListener("click", async () => {
+  const error = $("error").value.trim();
+  if (!error) { $("error-box").textContent = "Paste an error first."; return; }
+  $("error-box").textContent = "";
+  const btn = $("compare-btn");
+  btn.disabled = true; btn.textContent = "Comparing…";
+  try {
+    const [off, on] = await Promise.all([
+      api("POST", "/debug", { error, use_memory: false }),
+      api("POST", "/debug", { error, use_memory: true }),
+    ]);
+    $("cmp-off").textContent = off.reply;
+    $("cmp-on").textContent = on.reply;
+    const m = on.matched_incident;
+    const badge = $("cmp-badge");
+    badge.style.display = "";
+    if (m) {
+      badge.className = "badge strict";
+      badge.textContent = `${m.api_name} · verified ${Math.round(m.confidence * 100)}%`;
+    } else if (on.match_status === "recall") {
+      badge.className = "badge recall"; badge.textContent = "unverified lead";
+    } else {
+      badge.className = "badge none"; badge.textContent = "no match";
+    }
+    $("compare-area").style.display = "";
+    highlightMatch(on);
+    loadHistory(); loadStats();
+  } catch (e) {
+    $("error-box").textContent = "Compare failed: " + e.message;
+  } finally { btn.disabled = false; btn.textContent = "Compare"; }
+});
+
+// ---- Stats cards ----
+async function loadStats() {
+  try {
+    const s = await api("GET", "/stats");
+    const cards = [
+      [s.total_incidents, "incidents"],
+      [s.distinct_apis, "apis"],
+      [s.total_queries, "debug queries"],
+      [`${Math.round(s.hit_rate * 100)}%`, "recall hit rate", `${s.recall_hits}/${s.memory_on_queries} memory-on`],
+      [`${s.time_saved_minutes}m`, "est. time saved", "estimate: 45 min per hit"],
+    ];
+    $("stat-cards").innerHTML = cards.map(([n, l, sub]) =>
+      `<div class="stat-card"><div class="num">${n}</div><div class="lbl">${l}</div>${sub ? `<div class="sub">${sub}</div>` : ""}</div>`
+    ).join("");
+  } catch { /* stats are cosmetic - never block the app */ }
+}
+
+// ---- Right-column tabs (active tab remembered in memory, not localStorage) ----
+let activeRtab = "incidents";
+document.querySelectorAll(".rtabs button").forEach((b) =>
+  b.addEventListener("click", () => {
+    activeRtab = b.dataset.rtab;
+    document.querySelectorAll(".rtabs button").forEach((x) => x.classList.toggle("active", x === b));
+    document.querySelectorAll(".rtab-panel").forEach((x) => x.classList.toggle("active", x.id === "rtab-" + activeRtab));
+    if (activeRtab === "graph") drawGraph();      // layout needs visible size
+    if (activeRtab === "history") { loadHistoryTable(); drawQpd(); }
+  }));
+
+function renderMatch(r) {
+  const badge = $("tier-badge"), area = $("match-area");
+  if (!r.use_memory_active) {
+    badge.className = "badge off"; badge.textContent = "memory off";
+    area.innerHTML = '<span class="muted">Memory was OFF for this query — nothing was recalled. Toggle it on to compare.</span>';
+    return;
+  }
+  const m = r.matched_incident;
+  if (m) {
+    badge.className = "badge strict";
+    badge.textContent = `verified · ${Math.round(m.confidence * 100)}%`;
+    area.innerHTML = `
+      <div class="match-card">
+        <div><b>${esc(m.api_name)}</b> — verified match</div>
+        <div class="meta">Why: structurally same error (same provider + code/structure)</div>
+        <div class="meta">Past error: ${esc(m.error_signature)}</div>
+        <div class="meta">Incident id: ${esc(m.incident_id)}</div>
+      </div>`;
+    return;
+  }
+  if (r.match_status === "recall") {
+    badge.className = "badge recall"; badge.textContent = "unverified lead";
+    area.innerHTML = `
+      <div class="match-card conflict">
+        <div><b>No verified match</b> — showing closest past incidents as leads only.</div>
+        ${r.recalled_incidents.map((c) => `<div class="meta">• ${esc(c.split("\n").slice(0, 2).join(" — "))}</div>`).join("")}
+      </div>`;
+    return;
+  }
+  badge.className = "badge none"; badge.textContent = "no match";
+  area.innerHTML = '<span class="muted">Nothing in team memory resembles this error.</span>';
+}
+
+$("new-btn").addEventListener("click", () => openIncidentDialog(null));
+$("cancel-new").addEventListener("click", () => $("new-dialog").close());
+
+let editingId = null;
+
+function openIncidentDialog(existing) {
+  editingId = existing ? existing.id : null;
+  $("dlg-title").textContent = existing ? `Edit incident · ${existing.api_name}` : "Log a resolved incident";
+  $("dlg-sub").textContent = existing
+    ? "Saves re-retain the corrected text into Hindsight and tombstone the old version."
+    : "Gets retained into the team's shared memory immediately.";
+  $("f-api").value = existing ? existing.api_name : "";
+  $("f-error").value = existing ? existing.error_signature : "";
+  $("f-cause").value = existing ? existing.root_cause : "";
+  $("f-fix").value = existing ? existing.fix : "";
+  $("f-by").value = existing ? (existing.resolved_by || "") : "";
+  $("save-new").textContent = existing ? "Save changes" : "Retain";
+  $("new-dialog").showModal();
+}
+
+$("save-new").addEventListener("click", async () => {
+  const body = {
+    api_name: $("f-api").value.trim(),
+    error_signature: $("f-error").value.trim(),
+    root_cause: $("f-cause").value.trim(),
+    fix: $("f-fix").value.trim(),
+    resolved_by: $("f-by").value.trim() || null,
+  };
+  if (!body.api_name || !body.error_signature || !body.root_cause || !body.fix) {
+    $("seed-result").textContent = "Fill api, error, cause and fix first.";
+    return;
+  }
+  const wasEdit = !!editingId;
+  try {
+    if (editingId) {
+      await api("PUT", "/incidents/" + editingId, body);
+    } else {
+      await api("POST", "/incidents", body);
+    }
+    $("new-dialog").close();
+    ["f-api", "f-error", "f-cause", "f-fix", "f-by"].forEach((id) => ($(id).value = ""));
+    editingId = null;
+    $("seed-result").textContent = wasEdit ? "Updated ✓" : "Retained ✓";
+    await loadIncidents(); await loadHealth(); await loadStats();
+    if (activeRtab === "graph") drawGraph(); // animate the new node in
+  } catch (e) { $("seed-result").textContent = "Failed: " + e.message; }
+});
+
+async function loadIncidents() {
+  try {
+    const r = await api("GET", "/incidents");
+    allIncidents = r.incidents;
+
+    // filter dropdown options (selection preserved across reloads)
+    const apis = [...new Set(allIncidents.map((i) => i.api_name))].sort();
+    const resolvers = [...new Set(allIncidents.map((i) => i.resolved_by).filter(Boolean))].sort();
+    const fill = (sel, values, label) => {
+      const cur = $(sel).value;
+      $(sel).innerHTML = `<option value="">${label}</option>` +
+        values.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+      $(sel).value = cur;
+    };
+    fill("flt-api", apis, "All APIs");
+    fill("flt-resolver", resolvers, "All resolvers");
+
+    renderFilteredIncidents();
+  } catch (e) {
+    $("incidents").innerHTML = `<span class="muted">Could not load: ${esc(e.message)}</span>`;
+  }
+}
+
+let allIncidents = [];
+let expandedIncidentId = null; // only one incident row expands at a time
+
+function renderFilteredIncidents() {
+  const q = $("flt-search").value.toLowerCase();
+  const api = $("flt-api").value, who = $("flt-resolver").value;
+  const list = allIncidents.filter((i) =>
+    (!q || (i.error_signature + " " + i.root_cause + " " + i.fix).toLowerCase().includes(q))
+    && (!api || i.api_name === api) && (!who || i.resolved_by === who));
+  const listEl = $("incidents");
+  if (!allIncidents.length) {
+    listEl.innerHTML = '<span class="muted">No incidents yet — click "Seed demo data".</span>';
+    return;
+  }
+  if (!list.length) {
+    listEl.innerHTML = '<span class="muted">No incidents match these filters.</span>';
+    return;
+  }
+    listEl.innerHTML = "";
+    for (const inc of list) {
+      const isOpen = inc.id === expandedIncidentId;
+      const div = document.createElement("div");
+      div.className = isOpen ? "inc-row open" : "inc-row";
+      // one compact line: API · category chip · truncated error
+      div.innerHTML = `
+        <div class="inc-line">
+          <b>${esc(inc.api_name)}</b>
+          <span class="chip">${esc(inc.category || "other")}</span>
+          <span class="inc-err">${esc(inc.error_signature)}</span>
+        </div>`;
+      if (isOpen) {
+        // expanded: full details + actions (one row at a time)
+        const body = document.createElement("div");
+        body.className = "inc-body";
+        body.innerHTML = `
+          <div><b>Error:</b> ${esc(inc.error_signature)}</div>
+          <div><b>Root cause:</b> ${esc(inc.root_cause)}</div>
+          <div><b>Fix:</b> ${esc(inc.fix)}</div>
+          <div class="muted">resolved by ${esc(inc.resolved_by || "unknown")} on ${esc(inc.date || "unknown")} · id: ${esc(inc.id)}</div>
+          <div class="actions">
+            <button class="ghost" data-act="edit">Edit</button>
+            <button data-act="del">Delete</button>
+          </div>`;
+        body.querySelector('[data-act="del"]').addEventListener("click", async () => {
+          if (!confirm(`Delete incident ${inc.id} (${inc.api_name})? Its memory text is tombstoned so recall will skip it.`)) return;
+          try { await api("DELETE", "/incidents/" + inc.id); await loadIncidents(); await loadHealth(); await loadStats(); }
+          catch (e) { alert("Delete failed: " + e.message); }
+        });
+        body.querySelector('[data-act="edit"]').addEventListener("click", () => openIncidentDialog(inc));
+        // clicks inside the expanded body must not toggle the row closed
+        body.addEventListener("click", (ev) => ev.stopPropagation());
+        div.appendChild(body);
+      }
+      div.addEventListener("click", () => {
+        expandedIncidentId = isOpen ? null : inc.id;
+        renderFilteredIncidents();
+      });
+      $("incidents").appendChild(div);
+    }
+  }
+
+["flt-search", "flt-api", "flt-resolver"].forEach((id) =>
+  $(id).addEventListener("input", renderFilteredIncidents));
+
+// ---- Export: download the incident log as JSON or Markdown ----
+function download(filename, text, mime) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+$("export-json-btn").addEventListener("click", () => {
+  download("incidents.json", JSON.stringify(allIncidents, null, 2), "application/json");
+  $("actions-menu").removeAttribute("open"); // close the ⋯ menu after acting
+});
+
+$("export-md-btn").addEventListener("click", () => {
+  const md = ["# Incident log", "",
+    ...allIncidents.map((i) =>
+      `## ${i.api_name} — ${i.error_signature}\n`
+      + `- **Category:** ${i.category || "other"}\n`
+      + `- **Root cause:** ${i.root_cause}\n`
+      + `- **Fix:** ${i.fix}\n`
+      + `- **Resolved by:** ${i.resolved_by || "unknown"} on ${i.date || "unknown"}\n`
+      + `- **Id:** ${i.id}\n`)].join("\n");
+  download("incidents.md", md, "text/markdown");
+  $("actions-menu").removeAttribute("open");
+});
+
+// close the ⋯ menu when clicking anywhere else
+document.addEventListener("click", (ev) => {
+  const menu = $("actions-menu");
+  if (menu.open && !menu.contains(ev.target)) menu.removeAttribute("open");
+});
+
+async function loadHealth() {
+  try {
+    const h = await api("GET", "/health");
+    $("health").textContent =
+      `${h.incidents} incidents · hindsight ${h.hindsight ? "up" : "down"} · llm ${h.llm ? "up" : "down"}`;
+  } catch { $("health").textContent = "backend unreachable"; }
+}
+
+async function loadHistory() {
+  try {
+    const rows = await api("GET", "/history?limit=" + (showAllHistory ? 200 : 5));
+    const list = $("history");
+    if (!rows.length) {
+      list.innerHTML = '<span class="muted">No runs yet — debug an error and it will be saved here.</span>';
+      return;
+    }
+    list.innerHTML = `
+      <table class="hist-table">
+        <thead><tr><th>Time</th><th>API</th><th>Memory</th><th>Conf.</th></tr></thead>
+        <tbody>
+          ${rows.map((h) => `
+            <tr class="hist-mini" data-err="${esc(h.error).replace(/"/g, "&quot;")}">
+              <td class="muted">${esc((h.ts || "").slice(11, 16))}</td>
+              <td>${h.matched_api ? `<b>${esc(h.matched_api)}</b>` : '<span class="muted">no match</span>'}</td>
+              <td>${h.use_memory ? "ON" : "OFF"}</td>
+              <td>${h.confidence != null ? Math.round(h.confidence * 100) + "%" : "—"}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>`;
+    $("show-all-btn").textContent = showAllHistory ? "Show recent" : "Show all";
+    // clicking a row re-runs that query
+    list.querySelectorAll("tr.hist-mini").forEach((tr) =>
+      tr.addEventListener("click", () => {
+        $("error").value = tr.dataset.err;
+        $("debug-btn").click();
+      }));
+  } catch (e) {
+    $("history").innerHTML = `<span class="muted">Could not load: ${esc(e.message)}</span>`;
+  }
+}
+
+let showAllHistory = false;
+
+// ---- History tab: full table + queries-per-day chart (Show all) ----
+async function loadHistoryTable() {
+  try {
+    const rows = await api("GET", "/history?limit=200");
+    if (!rows.length) {
+      $("history-table").innerHTML = '<span class="muted">No queries yet — debug an error first.</span>';
+      $("qpd-chart").innerHTML = "";
+      return;
+    }
+    $("history-table").innerHTML = `
+      <table class="hist-table">
+        <thead><tr><th>When</th><th>Error</th><th>Memory</th><th>Match</th><th>Conf.</th></tr></thead>
+        <tbody>
+          ${rows.map((h) => `
+            <tr data-err="${esc(h.error).replace(/"/g, "&quot;")}">
+              <td class="muted">${esc((h.ts || "").replace("T", " ").slice(5, 16))}</td>
+              <td>${esc(h.error.length > 70 ? h.error.slice(0, 70) + "…" : h.error)}</td>
+              <td>${h.use_memory ? "ON" : "OFF"}</td>
+              <td>${h.matched_api ? `<b>${esc(h.matched_api)}</b>` : '<span class="muted">—</span>'}</td>
+              <td>${h.confidence != null ? Math.round(h.confidence * 100) + "%" : "—"}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>`;
+    // clicking a row re-runs that query
+    document.querySelectorAll("#history-table tbody tr").forEach((tr) =>
+      tr.addEventListener("click", () => {
+        $("error").value = tr.dataset.err;
+        $("debug-btn").click(); // debug area is always visible now
+      }));
+  } catch (e) {
+    $("history-table").innerHTML = `<span class="muted">Could not load: ${esc(e.message)}</span>`;
+  }
+}
+
+// small bar chart: queries per day (pure DOM, no extra libs)
+function drawQpd() {
+  api("GET", "/history?limit=500").then((rows) => {
+    const byDay = {};
+    for (const h of rows) {
+      const day = (h.ts || "").slice(0, 10);
+      if (day) byDay[day] = (byDay[day] || 0) + 1;
+    }
+    const days = Object.entries(byDay).sort().slice(-14);
+    const max = Math.max(1, ...days.map(([, n]) => n));
+    $("qpd-chart").innerHTML = days.length
+      ? `<div class="note" style="margin-bottom:6px">Queries per day (last ${days.length} day${days.length > 1 ? "s" : ""})</div>`
+        + `<div style="display:flex; align-items:flex-end; gap:6px; height:90px">`
+        + days.map(([d, n]) =>
+            `<div style="flex:1; text-align:center" title="${d}: ${n}">`
+            + `<div style="height:${Math.round((n / max) * 70) + 2}px; background:var(--ink); border-radius:3px 3px 0 0; opacity:.75"></div>`
+            + `<div class="note" style="font-size:10px">${d.slice(5)}</div></div>`).join("")
+        + `</div>`
+      : "";
+  }).catch(() => {});
+}
+
+$("export-history-btn").addEventListener("click", async () => {
+  const rows = await api("GET", "/history?limit=10000");
+  const csv = ["timestamp,error,use_memory,matched_api,matched_incident_id,confidence,memory_tier"]
+    .concat(rows.map((h) =>
+      [h.ts, JSON.stringify(h.error), h.use_memory, h.matched_api || "", h.matched_incident_id || "",
+       h.confidence ?? "", h.memory_tier].join(","))).join("\n");
+  download("debug_history.csv", csv, "text/csv");
+});
+
+$("show-all-btn").addEventListener("click", () => {
+  showAllHistory = !showAllHistory;
+  loadHistory();
+});
+
+$("clear-history-btn").addEventListener("click", async () => {
+  if (!confirm("Clear all saved run history?")) return;
+  try { await api("DELETE", "/history"); showAllHistory = false; await loadHistory(); }
+  catch (e) { alert("Clear failed: " + e.message); }
+});
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// ---- Memory Graph (D3 force layout) ----
+const PALETTE = ["#43795f", "#96712f", "#a95049", "#5b7a9d", "#7a6a96", "#4f8a8b", "#9c6b4f", "#6b7f3f"];
+const colorFor = (() => {
+  const map = {};
+  return (api) => (map[api] ??= PALETTE[Object.keys(map).length % PALETTE.length]);
+})();
+
+let graphSim = null, graphNodes = [], highlightedId = null;
+
+async function drawGraph() {
+  let data;
+  try { data = await api("GET", "/graph"); }
+  catch (e) { $("graph-svg").innerHTML = ""; return; }
+
+  if (graphSim) graphSim.stop(); // never leave an old simulation ticking
+
+  const svg = d3.select("#graph-svg");
+  svg.selectAll("*").remove();
+  const width = svg.node().clientWidth || 500, height = svg.node().clientHeight || 360;
+  svg.attr("viewBox", `0 0 ${width} ${height}`); // keep coordinates in sync with the box
+
+  graphNodes = data.nodes.map((n) => ({ ...n }));
+  const links = data.edges.map((e) => ({ ...e }));
+
+  // legend: one swatch per API
+  $("graph-legend").innerHTML = [...new Set(graphNodes.map((n) => n.api_name))]
+    .map((a) => `<span><span class="dot" style="background:${colorFor(a)}"></span>${esc(a)}</span>`)
+    .join("");
+
+  const g = svg.append("g");
+  svg.call(d3.zoom().scaleExtent([0.4, 3]).on("zoom", (ev) => g.attr("transform", ev.transform)));
+
+  graphSim = d3.forceSimulation(graphNodes)
+    .force("link", d3.forceLink(links).id((d) => d.id).distance(90).strength(0.35))
+    .force("charge", d3.forceManyBody().strength(-260))
+    .force("x", d3.forceX(width / 2).strength(0.06))   // gentle pull to middle
+    .force("y", d3.forceY(height / 2).strength(0.06))
+    .force("collide", d3.forceCollide(26));
+
+  const link = g.append("g")
+    .selectAll("line").data(links).join("line")
+    .attr("stroke", "var(--line-strong)").attr("stroke-width", 1.4).attr("stroke-opacity", 0.7);
+
+  const node = g.append("g")
+    .selectAll("g").data(graphNodes).join("g")
+    .attr("cursor", "grab")
+    .call(d3.drag()
+      .on("start", (ev, d) => { if (!ev.active) graphSim.alphaTarget(0.25).restart(); d.fx = d.x; d.fy = d.y; })
+      .on("drag", (ev, d) => { d.fx = ev.x; d.fy = ev.y; })
+      .on("end", (ev, d) => { if (!ev.active) graphSim.alphaTarget(0); d.fx = null; d.fy = null; }));
+
+  node.append("circle")
+    .attr("r", 11)
+    .attr("fill", (d) => colorFor(d.api_name))
+    .attr("stroke", "var(--panel)").attr("stroke-width", 2);
+
+  node.append("text")
+    .text((d) => d.api_name)
+    .attr("x", 0).attr("y", -17)
+    .attr("text-anchor", "middle")
+    .attr("font-size", 10.5).attr("fill", "var(--muted)");
+
+  const tip = $("graph-tip");
+  node.on("mouseenter", (ev, d) => {
+      tip.style.display = "block";
+      tip.innerHTML = `<div class="tt-err">${esc(d.api_name)} · ${esc(d.category)}</div>`
+        + `<div class="tt-err" style="font-weight:500">${esc(d.error)}</div>`
+        + `<div class="tt-fix">${esc((d.fix || "").slice(0, 140))}${(d.fix || "").length > 140 ? "…" : ""}</div>`;
+    })
+    .on("mousemove", (ev) => {
+      tip.style.left = Math.min(ev.pageX + 14, window.innerWidth - 300) + "px";
+      tip.style.top = (ev.pageY + 14) + "px";
+    })
+    .on("mouseleave", () => { tip.style.display = "none"; });
+
+  node.attr("class", "node-g");
+  graphNodeSel = node;
+  graphLinkSel = link;
+
+  // nodes logged while the graph was open animate in
+  if (prevGraphCount > 0) {
+    node.select("circle").attr("r", 0).transition().duration(500).attr("r", 11);
+  }
+  prevGraphCount = graphNodes.length;
+
+  node.on("click", (ev, d) => {
+    ev.stopPropagation();
+    $("graph-detail").hidden = false;
+    $("graph-detail-body").innerHTML = `
+      <div class="inc-item" style="margin-top:0">
+        <div class="title">${esc(d.api_name)} <span class="muted">· ${esc(d.date || "")} · ${esc(d.resolved_by || "unknown")} · ${esc(d.category)}</span></div>
+        <div><b>Error:</b> ${esc(d.error)}</div>
+        <div><b>Root cause:</b> ${esc(d.root_cause)}</div>
+        <div><b>Fix:</b> ${esc(d.fix)}</div>
+        <div class="muted">id: ${esc(d.id)}</div>
+      </div>`;
+  });
+  svg.on("click", () => { $("graph-detail").hidden = true; });
+
+  graphSim.on("tick", () => {
+    // keep nodes inside the visible box
+    for (const d of graphNodes) {
+      d.x = Math.max(24, Math.min(width - 24, d.x));
+      d.y = Math.max(24, Math.min(height - 24, d.y));
+    }
+    link.attr("x1", (d) => d.source.x).attr("y1", (d) => d.source.y)
+        .attr("x2", (d) => d.target.x).attr("y2", (d) => d.target.y);
+    node.attr("transform", (d) => `translate(${d.x},${d.y})`);
+  });
+
+  // after the layout settles, zoom to fit so every node is visible
+  graphSim.on("end.nofit", null);
+  graphSim.on("end", () => fitZoom(g, width, height));
+  setTimeout(() => fitZoom(g, width, height), 1300); // in case it settles slowly
+
+  applyHighlight(); // re-apply any active highlight to the fresh layout
+}
+
+// zoom/pan the <g> so all nodes fit inside the svg with padding
+function fitZoom(g, width, height) {
+  const xs = graphNodes.map((d) => d.x).filter((v) => v != null);
+  const ys = graphNodes.map((d) => d.y).filter((v) => v != null);
+  if (!xs.length) return;
+  const pad = 40;
+  const x0 = Math.min(...xs) - pad, x1 = Math.max(...xs) + pad;
+  const y0 = Math.min(...ys) - pad, y1 = Math.max(...ys) + pad;
+  const scale = Math.min(1.4, Math.max(0.5, Math.min(width / (x1 - x0), height / (y1 - y0))));
+  const tx = (width - scale * (x0 + x1)) / 2, ty = (height - scale * (y0 + y1)) / 2;
+  g.transition().duration(500).attr("transform", `translate(${tx},${ty}) scale(${scale})`);
+}
+
+let graphNodeSel = null, graphLinkSel = null, prevGraphCount = 0;
+
+// Pulse the verified-match node; dim everything else. Cleared on next query.
+function highlightMatch(resp) {
+  highlightedId = resp && resp.matched_incident ? resp.matched_incident.incident_id : null;
+  applyHighlight();
+}
+
+function applyHighlight() {
+  if (!graphNodeSel) return;
+  graphNodeSel.classed("hl", (d) => d.id === highlightedId)
+    .select("circle").attr("opacity", (d) => !highlightedId || d.id === highlightedId ? 1 : 0.22);
+  graphNodeSel.select("text").attr("opacity", (d) => !highlightedId || d.id === highlightedId ? 1 : 0.22);
+  if (graphLinkSel) graphLinkSel.attr("stroke-opacity", highlightedId ? 0.1 : 0.7);
+}
+
+loadIncidents();
+loadHealth();
+loadHistory();
+loadStats();
+window.addEventListener("resize", () => { if (activeRtab === "graph") drawGraph(); });
+</script>
+</body>
+</html>

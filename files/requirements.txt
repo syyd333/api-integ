@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+pydantic
+anthropic
+hindsight-client
+python-dotenv
+pytest
+httpx
